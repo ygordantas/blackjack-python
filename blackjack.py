@@ -212,6 +212,23 @@ def assignAceValue(card):
         card.setValue(int(aceQuestion))
 
 
+def wonRoundInfo(whoWon, pl, pc, bet, infoMsg):
+    if whoWon == 'pl':
+        displayHand(pc.cardsFaceUp, pl.hand)
+        print(infoMsg)
+        pl.setBalance(pl.balance + bet)
+        pc.setBalance(pc.balance - bet)
+        print(f'Your new balance is {pl.balance}')
+        playAnotherBetQuestion(pl.balance, pc.balance)
+    elif whoWon == 'pc':
+        displayHand(pc.cardsFaceUp, pl.hand)
+        print(infoMsg)
+        pl.setBalance(pl.balance - bet)
+        pc.setBalance(pc.balance + bet)
+        print(f'Your new balance is {pl.balance}')
+        playAnotherBetQuestion(pl.balance, pc.balance)
+
+
 def init():
     print("Let's get started!")
 
@@ -261,6 +278,7 @@ def game():
     while isGameOn:
         # Set bet
         bet = 0
+
         while True:
             try:
                 bet = int(input('How much do you want to bet?'))
@@ -300,7 +318,12 @@ def game():
         for card in pl.hand:
             assignAceValue(card)
 
-        isPlayerRound = True
+        # Sum players cards points to check if he won the round
+        pl.setPoints(calculatePoints(pl.hand))
+        if pl.points == 21:
+            wonRoundInfo('pl', pl, pc, bet, 'You won the bet! :)')
+        else:
+            isPlayerRound = True
 
         while isPlayerRound:
 
@@ -315,21 +338,11 @@ def game():
                 pl.setPoints(calculatePoints(pl.hand))
 
                 if pl.points > 21:
-                    print('BUST! you lost your bet :(')
-                    displayHand(pc.cardsFaceUp, pl.hand)
-                    pl.setBalance(pl.balance - bet)
-                    pc.setBalance(pc.balance + bet)
-                    print(f'Your new balance is {pl.balance}')
-                    playAnotherBetQuestion(pl.balance, pc.balance)
+                    wonRoundInfo('pc', pl, pc, bet,
+                                 'BUST! you lost your bet :(')
 
                 elif pl.points == 21:
-
-                    displayHand(pc.cardsFaceUp, pl.hand)
-                    print('You won the bet :)')
-                    pl.setBalance(pl.balance + bet)
-                    pc.setBalance(pc.balance - bet)
-                    print(f'Your new balance is {pl.balance}')
-                    playAnotherBetQuestion(pl.balance, pc.balance)
+                    wonRoundInfo('pl', pl, pc, bet, 'You won the bet :)')
                 else:
                     # Player still has < 21 pts ... Starts round again
                     displayHand(pc.cardsFaceUp, pl.hand)
@@ -368,20 +381,10 @@ def game():
                     pc.setPoints(calculatePoints(pc.cardsFaceUp))
 
             if pc.points > pl.points and pc.points <= 21:
-                displayHand(pc.cardsFaceUp, pl.hand)
-                print('Computer wins the bet')
-                pl.setBalance(pl.balance - bet)
-                pc.setBalance(pc.balance + bet)
-                print(f'Your new balance is {pl.balance}')
-                playAnotherBetQuestion(pl.balance, pc.balance)
+                wonRoundInfo('pc', pl, pc, bet, 'Computer wins the bet')
             elif pc.points > 21:
-                displayHand(pc.cardsFaceUp, pl.hand)
-                print('Computer BUSTED!!!')
-                print('You won the bet :)')
-                pl.setBalance(pl.balance + bet)
-                pc.setBalance(pc.balance - bet)
-                print(f'Your new balance is {pl.balance}')
-                playAnotherBetQuestion(pl.balance, pc.balance)
+                wonRoundInfo('pl', pl, pc, bet,
+                             'Computer BUSTED... You WON the bet :)')
             else:
                 pc.drawCardFaceUp(deck.drawCard())
                 displayHand(pc.cardsFaceUp, pl.hand)
